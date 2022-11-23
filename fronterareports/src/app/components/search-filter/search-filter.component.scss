@@ -1,0 +1,40 @@
+.row{
+    width: 100%;
+}
+
+.radio-group-1 {
+    display: flex;
+    flex-direction: column;
+    margin: 15px 0;
+    align-items: flex-start;
+    width: min-content;
+}
+
+.mat-radio-button {
+    margin: 5px;
+}
+
+.radio-label{
+    width: 20%;
+}
+
+.item-border{
+    border: 5;
+    border-radius: 5%;
+    -webkit-border-radius: 5%;
+    -moz-border-radius: 5%;
+    -ms-border-radius: 5%;
+    -o-border-radius: 5%;
+}
+
+.mat-card{
+    margin: 10px;
+    background-color: beige;
+}
+
+.radio-groups-container{
+    width: fit-content;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 30%;
+}

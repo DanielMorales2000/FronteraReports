@@ -1,0 +1,31 @@
+
+$headerColor: #00AFA3;
+
+
+mat-header-cell{
+   background-color: rgb(212, 255, 255);
+   line-height: normal;
+}
+
+.mat-cell{
+   font-size: 12px;
+   justify-content: space-around;
+   overflow-wrap: anywhere;
+   padding: 5px;
+   font-family: ui-monospace;
+   line-break: auto;
+   line-height: normal;
+   justify-content: space-around;
+   display: list-item;
+   border-right-style: inset;
+}
+
+.tb-card{
+
+}
+
+.filter-list{
+   margin-top: 0;
+   list-style: kannada;
+   font: -webkit-small-control;
+}

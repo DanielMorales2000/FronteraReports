@@ -1,0 +1,113 @@
+<app-search-filter></app-search-filter>
+
+<mat-card class="tb-card">
+    <input type="file" (change)="fileChangeListener($event)" accept=".csv">
+    <div *ngIf="dataSource">
+      <mat-table matTableExporter [dataSource]="dataSource" #exporter="matTableExporter" border="1">
+        
+        <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+        <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+        
+        <!-- Columns -->
+        <div *ngFor="let column of columnsList">
+          <ng-container matColumnDef="{{column.columnDef}}">
+            <mat-header-cell *matHeaderCellDef> 
+              <button mat-icon-button [matMenuTriggerFor]="menu" 
+              (click)="onSelectColumnFilter(column.dataPosition, column.columnType)">
+                <mat-icon [ngStyle]="{'color': isFilterActive(column.dataPosition) ? 'red':''}" >more_vert</mat-icon>
+              </button>
+              <span>{{column.columnName}}</span>
+            </mat-header-cell>
+            <mat-cell *matCellDef="let element"> {{element[column.dataPosition]}} </mat-cell>
+          </ng-container>
+        </div>
+      </mat-table>
+    </div>
+    <mat-label *ngIf="!dataSource">Selecciona un filtro para mostrar datos</mat-label>
+    <!-- <button mat-button class="btn btn-danger" (click)="exporter.exportTable('csv')">Export to CSV</button>
+    <button mat-button (click)="exporter.exportTable('xlsx')">Export to Excel</button>
+    <button mat-button (click)="exporter.exportTable('txt')">Export to TXT</button>
+    <button mat-button (click)="dataConversorToExcel()">Export Json to Excel</button> -->
+  </mat-card> 
+
+  <!-- Filters -->
+  <mat-menu #menu="matMenu" yPosition="below">
+    <form (click)="$event.stopPropagation()">
+      <div mat-menu-item>
+        <mat-form-field appearance="fill" *ngIf="selectedFilter.ColumnType != columnTypeEnum.na">
+          <mat-label>Modo de Filtrado</mat-label>
+
+          <mat-select [(ngModel)]="FilterMode" [ngModelOptions]="{standalone: true}" *ngIf="selectedFilter.ColumnType == columnTypeEnum.string">
+            <mat-option value="{{filterModeEnum.ct}}">Contiene</mat-option>
+            <mat-option value="{{filterModeEnum.ilst}}">Lista</mat-option>
+          </mat-select>
+
+          <mat-select [(ngModel)]="FilterMode" [ngModelOptions]="{standalone: true}" *ngIf="selectedFilter.ColumnType == columnTypeEnum.number || selectedFilter.ColumnType == columnTypeEnum.datetime_local">
+            <mat-option value="{{filterModeEnum.st}}">Inferior a</mat-option>
+            <mat-option value="{{filterModeEnum.gt}}">Superior a</mat-option>
+            <mat-option value="{{filterModeEnum.eq}}">Igual</mat-option>
+            <mat-option value="{{filterModeEnum.ct}}" *ngIf="selectedFilter.ColumnType == columnTypeEnum.number">Contiene</mat-option>
+            <mat-option value="{{filterModeEnum.bt}}">En rango</mat-option>
+            <mat-option value="{{filterModeEnum.ilst}}">Lista</mat-option>
+          </mat-select>
+  
+          <mat-select [(ngModel)]="FilterMode" [ngModelOptions]="{standalone: true}" *ngIf="selectedFilter.ColumnType == columnTypeEnum.boolean">
+            <mat-option>None</mat-option>
+            <mat-option value="{{filterModeEnum.t}}">Verdadero</mat-option>
+            <mat-option value="{{filterModeEnum.f}}">Falso</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <br>
+      <!-- Value -->
+      <section *ngIf="FilterMode != filterModeEnum.ilst">
+        <div mat-menu-item *ngIf="selectedFilter.ColumnType == columnTypeEnum.string" style="height: auto;">
+          <mat-form-field appearance="fill">
+            <mat-label>Valor:</mat-label>
+            <input matInput type="{{'text'}}" [(ngModel)]="FilterValue" [ngModelOptions]="{standalone: true}" name="FilterValue"/>
+          </mat-form-field>
+        </div> 
+
+        <div mat-menu-item *ngIf="selectedFilter.ColumnType == columnTypeEnum.number" style="height: auto;">
+          <mat-form-field appearance="fill">
+            <mat-label>{{FilterMode == filterModeEnum.bt?'Valor inicial:':'Valor:'}}</mat-label>
+            <input matInput type="number" [(ngModel)]="FilterValue" [ngModelOptions]="{standalone: true}" name="FilterValue"/>
+          </mat-form-field><br>
+          <mat-form-field appearance="fill" *ngIf="FilterMode == filterModeEnum.bt">
+            <mat-label>{{'Valor final:'}}</mat-label>
+            <input matInput type="number" [(ngModel)]="SecondFilterValue" [ngModelOptions]="{standalone: true}" name="FilterValue2"/>
+          </mat-form-field>
+        </div>
+
+        <div mat-menu-item *ngIf="selectedFilter.ColumnType == columnTypeEnum.datetime_local" style="height: auto;">
+          <mat-form-field appearance="fill">
+            <mat-label>{{FilterMode == filterModeEnum.bt?'Fecha inicial:':'Fecha:'}}</mat-label>
+            <input matInput type="datetime-local" [(ngModel)]="FilterValue" [ngModelOptions]="{standalone: true}" name="FilterValue"/>
+          </mat-form-field><br>
+          <mat-form-field appearance="fill" *ngIf="FilterMode == filterModeEnum.bt">
+            <mat-label>{{'Fecha final:'}}</mat-label>
+            <input matInput type="datetime-local" [(ngModel)]="SecondFilterValue" [ngModelOptions]="{standalone: true}" name="SecondFilterValue"/>
+          </mat-form-field>
+        </div>
+      </section>
+      <!-- List -->
+      <div mat-menu-item *ngIf="FilterMode == filterModeEnum.ilst" style="height: 120px;overflow: scroll;" >
+          <span class="example-list-section">
+            <ul class="filter-list">
+              <li *ngFor="let filterDataElement of FilterDataList">
+                <mat-checkbox
+                [checked]="filterDataElement.checked" 
+                [color]="'accent'" 
+                (change)="onFilterDataListChange(filterDataElement)">
+                  {{filterDataElement.dataFilter}}
+                </mat-checkbox>
+              </li>
+              
+            </ul>
+          </span>
+      </div>
+
+    </form>
+    <button mat-menu-item (click)="onCreateFilter()">Filtrar</button>
+    <button mat-menu-item (click)="onClearFilter()">Limpiar</button>
+  </mat-menu>
