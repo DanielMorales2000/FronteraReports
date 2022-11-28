@@ -4,6 +4,7 @@ import { FileSaverService } from 'ngx-filesaver';
 import { NgxCsvParser, NgxCSVParserError } from 'ngx-csv-parser';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatPaginator } from '@angular/material/paginator';
+import { ServicesService } from 'src/app/services/services.service';
 
 export enum FilterModeEnum {
   na = 'na',/*No Selection */
@@ -48,37 +49,9 @@ export interface SelectedFilter {
 })
 export class TableComponent {
 
-  displayedColumns: string[] = [
-    'position',
-    'nodo',
-    'idSocket',
-    'propietario',
-    'nodoDestino',];
+  displayedColumns: string[] = [];
 
-  columnsList: any = [
-  { columnDef: 'position', columnName:'Posición', columnType: ColumnTypeEnum.number, dataPosition: 0 },
-  { columnDef: 'nodo', columnName:'Nodo', columnType: ColumnTypeEnum.string, dataPosition: 1 },
-  { columnDef: 'idSocket', columnName:'Socket', columnType: ColumnTypeEnum.string, dataPosition: 2 },
-  { columnDef: 'propietario', columnName:'Propietario', columnType: ColumnTypeEnum.string, dataPosition: 3 },
-  { columnDef: 'nodoDestino', columnName:'Nodo de Destino', columnType: ColumnTypeEnum.string, dataPosition: 4 }];
-
-  displayedColumns2: string[] = [
-    'position',
-    'nodo',
-    'idSocket',
-    'propietario',
-    'propietario1',
-    'propietario2',
-    'nodoDestino',];
-
-  columnsList2: any = [
-  { columnDef: 'position', columnName:'XD', columnType: ColumnTypeEnum.number, dataPosition: 0 },
-  { columnDef: 'nodo', columnName:'XD', columnType: ColumnTypeEnum.string, dataPosition: 1 },
-  { columnDef: 'idSocket', columnName:'XD', columnType: ColumnTypeEnum.string, dataPosition: 2 },
-  { columnDef: 'propietario', columnName:'XD', columnType: ColumnTypeEnum.string, dataPosition: 3 },
-  { columnDef: 'propietario1', columnName:'XD2', columnType: ColumnTypeEnum.string, dataPosition: 3 },
-  { columnDef: 'propietario2', columnName:'XD3', columnType: ColumnTypeEnum.string, dataPosition: 3 },
-  { columnDef: 'nodoDestino', columnName:'XD de Destino', columnType: ColumnTypeEnum.string, dataPosition: 4 }];
+  columnsList: any = [];
 
   header: boolean = false;
   filterModeEnum = FilterModeEnum;
@@ -108,12 +81,30 @@ export class TableComponent {
 
   constructor(private filerSaver: FileSaverService,
     private ngxCsvParser: NgxCsvParser,
-    private snackBar: MatSnackBar) { }
+    private snackBar: MatSnackBar,
+    private service: ServicesService) { }
+
+    //#region General Filter
+  onGetData(event: any){
+    event;
+    this.service.post(event).
+    subscribe({
+      next: response => {
+        response;
+        // const blob = new Blob([response], { type: 'application/octet-stream' });
+        // const fileName = 'Your File Name.csv';
+        // saveAs(blob, fileName);
+      },
+      error: error => {
+        console.log(error);
+      }
+    })
+  }
 
   fileChangeListener(event: any): void {
     const files = event.srcElement.files;
     this.header = (this.header as unknown as string) === 'true' || this.header === true;
-
+    
     this.ngxCsvParser.parse(files[0], { header: this.header, delimiter: ';', encoding: 'utf8' })
       .pipe().subscribe({
         next: (result): void => {
@@ -542,7 +533,7 @@ export class TableComponent {
     });
   }
 
-
+  //#endregion
 
   //#region Funciones que depronto utilice mas adelante
   // xlsxReader(_event: any){

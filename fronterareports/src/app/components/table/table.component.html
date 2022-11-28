@@ -1,4 +1,4 @@
-<app-search-filter></app-search-filter>
+<app-search-filter (FilterData)="onGetData($event)"></app-search-filter>
 
 <mat-card class="tb-card">
     <input type="file" (change)="fileChangeListener($event)" accept=".csv">

@@ -1,33 +1,31 @@
 <mat-card class="item-border">
-    <form [formGroup]="searchFilterForm" (ngSubmit)="onSave()" autocomplete="off">
+    <form [formGroup]="searchFilterForm" autocomplete="off">
         <div>
             <mat-form-field class="example-full-width" appearance="fill">
-                <mat-label>Fecha de saldo</mat-label>
-                <input matInput [matDatepicker]="picker" style="width: 75%;">
+                <mat-label>Choose a date</mat-label>
+                <input matInput [matDatepicker]="picker" formControlName="balance_date">
                 <mat-hint>MM/DD/YYYY</mat-hint>
-                <mat-datepicker-toggle matIconSuffix [for]="picker">
-                    <mat-icon matDatepickerToggleIcon>keyboard_arrow_down</mat-icon>
-                </mat-datepicker-toggle>
                 <mat-datepicker #picker></mat-datepicker>
             </mat-form-field>
+            <button mat-raised-button (click)="picker.open()">Open</button>
             <div class="radio-groups-container item-border">
                 <div class="radio-group-container">
                     <mat-label class="radio-label">Tipo de saldo</mat-label>
-                    <mat-radio-group aria-label="Seleccione una opción" class="radio-group-1" formControlName="Modo">
+                    <mat-radio-group aria-label="Seleccione una opción" class="radio-group-1" formControlName="balance_type">
                         <mat-radio-button value="auto">Automática</mat-radio-button>
                         <mat-radio-button value="balance">Manual</mat-radio-button>
                     </mat-radio-group>
                 </div>
                 <div class="radio-group-container">
                     <mat-label>Informe de saldo</mat-label>
-                    <mat-radio-group aria-label="Seleccione una opción" class="radio-group-1" formControlName="Resumen">
-                        <mat-radio-button value="summarybynodes">Resumen por Nodos</mat-radio-button>
-                        <mat-radio-button value="summarybycircuits">Resumen por Circuitos</mat-radio-button>
+                    <mat-radio-group aria-label="Seleccione una opción" class="radio-group-1" formControlName="balance_report">
+                        <mat-radio-button value="summarybynode">Resumen por Nodos</mat-radio-button>
+                        <mat-radio-button value="summarybycircuit">Resumen por Circuitos</mat-radio-button>
                         <mat-radio-button value="summarybylosses">Resumen por Pérdidas</mat-radio-button>
                     </mat-radio-group>
                 </div>
             </div>
-            <button mat-raised-button color="warn" (click)="onSave()">Filtrar</button>
+            <button mat-raised-button color="warn" (click)="onSave()" [disabled]="!searchFilterForm.valid">Filtrar</button>
         </div>
     </form>
 </mat-card>
