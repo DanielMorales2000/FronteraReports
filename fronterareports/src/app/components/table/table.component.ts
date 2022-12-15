@@ -3,8 +3,9 @@ import * as XLSX from 'xlsx';
 import { FileSaverService } from 'ngx-filesaver';
 import { NgxCsvParser, NgxCSVParserError } from 'ngx-csv-parser';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatPaginator } from '@angular/material/paginator';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { ServicesService } from 'src/app/services/services.service';
+
 
 export enum FilterModeEnum {
   na = 'na',/*No Selection */
@@ -48,17 +49,22 @@ export interface SelectedFilter {
   encapsulation: ViewEncapsulation.None
 })
 export class TableComponent {
+  dataLength!: number;
+  pageSize: number = 5;
+  pageSizeOptions: number[] = [5,10,15,20];
+
+  lowValue: number = 0;
+  highValue: number = 5;
 
   displayedColumns: string[] = [];
-
   columnsList: any = [];
+  dataSource: any;
+  csvRecords: any;
 
   header: boolean = false;
   filterModeEnum = FilterModeEnum;
   columnTypeEnum = ColumnTypeEnum;
 
-  dataSource: any;
-  csvRecords: any;
 
   GeneralListFilterList: any[] = [];
   filtersData: any[] = [];
@@ -84,16 +90,13 @@ export class TableComponent {
     private snackBar: MatSnackBar,
     private service: ServicesService) { }
 
-    //#region General Filter
+  //#region table creation  
   onGetData(event: any){
     event;
     this.service.post(event).
     subscribe({
       next: response => {
-        response;
-        // const blob = new Blob([response], { type: 'application/octet-stream' });
-        // const fileName = 'Your File Name.csv';
-        // saveAs(blob, fileName);
+        this.dataChangeListener(response);
       },
       error: error => {
         console.log(error);
@@ -101,19 +104,22 @@ export class TableComponent {
     })
   }
 
-  fileChangeListener(event: any): void {
-    const files = event.srcElement.files;
+  dataChangeListener(response: any): void {
+
     this.header = (this.header as unknown as string) === 'true' || this.header === true;
     
-    this.ngxCsvParser.parse(files[0], { header: this.header, delimiter: ';', encoding: 'utf8' })
-      .pipe().subscribe({
-        next: (result): void => {
-          this.tableBuilder(result);
-        },
-        error: (error: NgxCSVParserError): void => {
-          console.log('Error', error);
-        }
-      });
+    const myBlob = new Blob([response], { type: 'text/csv' });
+    const file = new File([myBlob], "file.csv");
+
+    this.ngxCsvParser.parse(file, { header: this.header, delimiter: ';', encoding: 'utf8' })
+    .pipe().subscribe({
+      next: (result): void => {
+        this.tableBuilder(result);
+      },
+      error: (error: NgxCSVParserError): void => {
+        console.log('Error', error);
+      }
+    });
   }
 
   tableBuilder(result: any): void{
@@ -122,71 +128,65 @@ export class TableComponent {
     this.columnsListSelector();
     this.dataSource = this.csvRecords;
     this.dataSource.splice(0, 1);
+    this.dataLength = this.dataSource.length;
     this.asyncProcessManager('GenerateFilterList');
   }
 
   columnsListSelector(){
-    /**
-     * details_by_circuit: 10
-     * summary_by_circuit: 7
-     * summary_by_node: 9
-     * summary_losses: 12
-     */
     switch (this.csvRecords[1].length) {
-      case 10:
+      case 11:
         this.columnsList = [
-          { columnDef: 'utc', columnName:'UTC', columnType: ColumnTypeEnum.datetime_local, dataPosition: 1 },
-          { columnDef: 'horalocal', columnName:'Hora Local', columnType: ColumnTypeEnum.datetime_local, dataPosition: 2 },
-          { columnDef: 'idsoc', columnName:'IdSoc', columnType: ColumnTypeEnum.string, dataPosition: 3 },
-          { columnDef: 'idsocket', columnName:'IdSocket', columnType: ColumnTypeEnum.string, dataPosition: 4 },
-          { columnDef: 'nodoorigen', columnName:'Nodo Origen', columnType: ColumnTypeEnum.string, dataPosition: 5 },
-          { columnDef: 'nododestino', columnName:'Nodo Destino', columnType: ColumnTypeEnum.string, dataPosition: 6 },
-          { columnDef: 'medido', columnName:'Medido [kWh]', columnType: ColumnTypeEnum.number, dataPosition: 7 },
-          { columnDef: 'estimado', columnName:'Estimado [kWh]', columnType: ColumnTypeEnum.number, dataPosition: 8 },
-          { columnDef: 'balanceado', columnName:'Balanceado', columnType: ColumnTypeEnum.number, dataPosition: 9 }];
+          { columnDef: 'balance_date', columnName:'Fecha de Informe', columnType: ColumnTypeEnum.datetime, dataPosition: 0 },
+          { columnDef: 'node', columnName:'Nodo', columnType: ColumnTypeEnum.string, dataPosition: 1 },
+          { columnDef: 'id_soc', columnName:'IdSoc', columnType: ColumnTypeEnum.string, dataPosition: 2 },
+          { columnDef: 'idsocket', columnName:'Id Socket', columnType: ColumnTypeEnum.string, dataPosition: 3 },
+          { columnDef: 'owner', columnName:'Dueño', columnType: ColumnTypeEnum.string, dataPosition: 4 },
+          { columnDef: 'node_destiny', columnName:'Nodo Destino', columnType: ColumnTypeEnum.string, dataPosition: 5 },
+          { columnDef: 'last_reading', columnName:'Ultima Lectura', columnType: ColumnTypeEnum.datetime_local, dataPosition: 6 },
+          { columnDef: 'real_meas', columnName:'Medida Real', columnType: ColumnTypeEnum.number, dataPosition: 7 },
+          { columnDef: 'est_meas', columnName:'Medida Estimada', columnType: ColumnTypeEnum.number, dataPosition: 8 },
+          { columnDef: 'bal_meas', columnName:'Medida Informada', columnType: ColumnTypeEnum.number, dataPosition: 9 },
+          { columnDef: 'error', columnName:'Error', columnType: ColumnTypeEnum.number, dataPosition: 10 }];
         break;
-      case 7:
+      case 8:
         this.columnsList = [
-          { columnDef: 'nodo', columnName:'Nodo', columnType: ColumnTypeEnum.string, dataPosition: 0 },
-          { columnDef: 'idsoc', columnName:'IdSoc', columnType: ColumnTypeEnum.string, dataPosition: 1 },
-          { columnDef: 'puntomedida', columnName:'Socket', columnType: ColumnTypeEnum.string, dataPosition: 2 },
-          { columnDef: 'ultimalectura', columnName:'Última Lectura', columnType: ColumnTypeEnum.datetime_local, dataPosition: 3 },
-          { columnDef: 'intervalostotales', columnName:'Intervalos Totales', columnType: ColumnTypeEnum.number, dataPosition: 4 },
-          { columnDef: 'intervalosleidos', columnName:'Intervalos Leídos', columnType: ColumnTypeEnum.number, dataPosition: 5 },
-          { columnDef: 'intervalosestimados', columnName:'Intervalos Estimados', columnType: ColumnTypeEnum.number, dataPosition: 6 }];
+          { columnDef: 'balance_date', columnName:'Fecha de Informe', columnType: ColumnTypeEnum.datetime, dataPosition: 0 },
+          { columnDef: 'node', columnName:'Nodo', columnType: ColumnTypeEnum.string, dataPosition: 1 },
+          { columnDef: 'id_soc', columnName:'IdSoc', columnType: ColumnTypeEnum.string, dataPosition: 2 },
+          { columnDef: 'idsocket', columnName:'Id Socket', columnType: ColumnTypeEnum.string, dataPosition: 3 },
+          { columnDef: 'last_reading', columnName:'Ultima Lectura', columnType: ColumnTypeEnum.datetime_local, dataPosition: 4 },
+          { columnDef: 'intervals_total', columnName:'Intervalos Totales', columnType: ColumnTypeEnum.number, dataPosition: 5 },
+          { columnDef: 'intervals_read', columnName:'Intervalos Leídos', columnType: ColumnTypeEnum.number, dataPosition: 6 },
+          { columnDef: 'intervals_est', columnName:'Intervalos Estimados', columnType: ColumnTypeEnum.number, dataPosition: 7 }];
         break;
-      case 9:
+      case 13:
         this.columnsList = [
-          { columnDef: 'nodo', columnName:'Nodo', columnType: ColumnTypeEnum.string, dataPosition: 0 },
-          { columnDef: 'idsocket', columnName:'Id Socket', columnType: ColumnTypeEnum.string, dataPosition: 1 },
-          { columnDef: 'propietario', columnName:'Propietario', columnType: ColumnTypeEnum.string, dataPosition: 2 },
-          { columnDef: 'nododestino', columnName:'Nodo Destino', columnType: ColumnTypeEnum.string, dataPosition: 3 },
-          { columnDef: 'ultimalectura', columnName:'Ultima Lectura', columnType: ColumnTypeEnum.datetime_local, dataPosition: 4 },
-          { columnDef: 'medidareal', columnName:'Medida Real', columnType: ColumnTypeEnum.number, dataPosition: 5 },
-          { columnDef: 'medidaestimada', columnName:'Medida Estimada', columnType: ColumnTypeEnum.number, dataPosition: 6 },
-          { columnDef: 'medidabalanceada', columnName:'Medida Balanceada', columnType: ColumnTypeEnum.number, dataPosition: 7 },
-          { columnDef: 'error', columnName:'Error', columnType: ColumnTypeEnum.number, dataPosition: 8 }];
-        break;
-      case 12:
-        this.columnsList = [
-          { columnDef: 'nodoa', columnName:'Nodo A', columnType: ColumnTypeEnum.string, dataPosition: 0 },
-          { columnDef: 'puntomedidaa', columnName:'Punto de Medida A', columnType: ColumnTypeEnum.string, dataPosition: 1 },
-          { columnDef: 'nodob', columnName:'Nodo B', columnType: ColumnTypeEnum.string, dataPosition: 2 },
-          { columnDef: 'puntomedidab', columnName:'Punto de Medida B', columnType: ColumnTypeEnum.string, dataPosition: 3 },
-          { columnDef: 'inyeccionaest', columnName:'Inyección en A est[kWh]', columnType: ColumnTypeEnum.number, dataPosition: 4 },
-          { columnDef: 'retirobest', columnName:'Retiro en B est [kWh]', columnType: ColumnTypeEnum.number, dataPosition: 5 },
-          { columnDef: 'perdidasestimadaskwh', columnName:'Pérdidas est [kWh]', columnType: ColumnTypeEnum.number, dataPosition: 6 },
-          { columnDef: 'perdidasestpctg', columnName:'Pérdidas est[%]', columnType: ColumnTypeEnum.string, dataPosition: 7 },
-          { columnDef: 'retiroabal', columnName:'Retiro en A bal [kWh]', columnType: ColumnTypeEnum.number, dataPosition: 8 },
-          { columnDef: 'retirobbal', columnName:'Retiro en B bal [kWh]', columnType: ColumnTypeEnum.number, dataPosition: 9 },
-          { columnDef: 'perdidasbalkwh', columnName:'Pérdidas bal [kWh]', columnType: ColumnTypeEnum.number, dataPosition: 10 },
-          { columnDef: 'perdidasbalpctg', columnName:'Pérdidas bal [%]', columnType: ColumnTypeEnum.string, dataPosition: 11 }];
+          { columnDef: 'balance_date', columnName:'Fecha de Informe', columnType: ColumnTypeEnum.datetime, dataPosition: 0 },
+          { columnDef: 'node_a', columnName:'Nodo A', columnType: ColumnTypeEnum.string, dataPosition: 1 },
+          { columnDef: 'idsocket_a', columnName:'Id Socket A', columnType: ColumnTypeEnum.string, dataPosition: 2 },
+          { columnDef: 'node_b', columnName:'Nodo B', columnType: ColumnTypeEnum.string, dataPosition: 3 },
+          { columnDef: 'idsocket_b', columnName:'Id Socket B', columnType: ColumnTypeEnum.string, dataPosition: 4 },
+          { columnDef: 'flow_a_est', columnName:'Flujo Estimado (A)', columnType: ColumnTypeEnum.number, dataPosition: 5 },
+          { columnDef: 'flow_b_est', columnName:'Flujo Estmado (B)', columnType: ColumnTypeEnum.number, dataPosition: 6 },
+          { columnDef: 'losses_est', columnName:'Perdidas Estimadas', columnType: ColumnTypeEnum.number, dataPosition: 7 },
+          { columnDef: 'losses_est_perc', columnName:'Perdidas Estimadas Percibidas', columnType: ColumnTypeEnum.number, dataPosition: 8 },
+          { columnDef: 'flow_a_bal', columnName:'Flujo Informado (A)', columnType: ColumnTypeEnum.number, dataPosition: 9 },
+          { columnDef: 'flow_b_bal', columnName:'Flujo Informado (B)', columnType: ColumnTypeEnum.number, dataPosition: 10 },
+          { columnDef: 'losses_bal', columnName:'Perdidas Informadas', columnType: ColumnTypeEnum.number, dataPosition: 11 },
+          { columnDef: 'losses_bal_perc', columnName:'Perdidas Percibidas Informadas', columnType: ColumnTypeEnum.number, dataPosition: 12 }];
         break;
     }
     this.displayedColumns = this.columnsList.map((x: { columnDef: any; }) => x.columnDef);
     this.displayedColumns;
   }
 
+  onPageChange(event: PageEvent): PageEvent{
+    this.pageSize = event.pageSize;
+    this.lowValue = event.pageIndex * this.pageSize;
+    this.highValue = this.lowValue + this.pageSize;
+    return event;
+  }
+  //#endregion
   //#region filters creation and elimination
   onSelectColumnFilter(columnIndex: number, columnType: ColumnTypeEnum): void{
     let filterExists: boolean = false;
@@ -321,7 +321,7 @@ export class TableComponent {
     });
 
   }
-
+  //#endregion
   //#region it is validated that the filter parameters are correct
 
   isFilterValid() {

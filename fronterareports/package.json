@@ -22,7 +22,7 @@
     "@angular/router": "^14.0.0",
     "@popperjs/core": "^2.11.6",
     "@swimlane/ngx-charts": "^20.1.0",
-    "bootstrap": "^5.2.2",
+    "bootstrap": "^5.2.3",
     "file-saver": "^2.0.5",
     "jquery": "^3.6.1",
     "mat-table-exporter": "^10.2.4",

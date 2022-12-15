@@ -14,6 +14,10 @@ export class ServicesService {
   constructor(private http: HttpClient) { }
 
   public post(body:any){
-    return this.http.post(this.endpoint,body,{responseType: 'text'});
+    return this.http.post(this.endpoint,body,{responseType: 'arraybuffer'}).pipe(
+      map((file: ArrayBuffer) => {
+          return file;
+      })
+    );
   }
 }

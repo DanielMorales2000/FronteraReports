@@ -1,9 +1,8 @@
 <app-search-filter (FilterData)="onGetData($event)"></app-search-filter>
 
 <mat-card class="tb-card">
-    <input type="file" (change)="fileChangeListener($event)" accept=".csv">
     <div *ngIf="dataSource">
-      <mat-table matTableExporter [dataSource]="dataSource" #exporter="matTableExporter" border="1">
+      <mat-table matTableExporter [dataSource]="(dataSource | slice: lowValue:highValue)" #exporter="matTableExporter" border="1">
         
         <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
         <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
@@ -22,6 +21,13 @@
           </ng-container>
         </div>
       </mat-table>
+      <mat-paginator #paginator 
+              [length]="dataLength"
+              [pageSize]="pageSize"
+              [pageSizeOptions]="pageSizeOptions"
+              (page)="onPageChange($event)">
+              aria-label="Select page">
+      </mat-paginator>
     </div>
     <mat-label *ngIf="!dataSource">Selecciona un filtro para mostrar datos</mat-label>
     <!-- <button mat-button class="btn btn-danger" (click)="exporter.exportTable('csv')">Export to CSV</button>
@@ -42,7 +48,8 @@
             <mat-option value="{{filterModeEnum.ilst}}">Lista</mat-option>
           </mat-select>
 
-          <mat-select [(ngModel)]="FilterMode" [ngModelOptions]="{standalone: true}" *ngIf="selectedFilter.ColumnType == columnTypeEnum.number || selectedFilter.ColumnType == columnTypeEnum.datetime_local">
+          <mat-select [(ngModel)]="FilterMode" [ngModelOptions]="{standalone: true}" 
+          *ngIf="selectedFilter.ColumnType == columnTypeEnum.number || selectedFilter.ColumnType == columnTypeEnum.datetime_local || selectedFilter.ColumnType == columnTypeEnum.datetime">
             <mat-option value="{{filterModeEnum.st}}">Inferior a</mat-option>
             <mat-option value="{{filterModeEnum.gt}}">Superior a</mat-option>
             <mat-option value="{{filterModeEnum.eq}}">Igual</mat-option>
@@ -79,14 +86,16 @@
           </mat-form-field>
         </div>
 
-        <div mat-menu-item *ngIf="selectedFilter.ColumnType == columnTypeEnum.datetime_local" style="height: auto;">
+        <div mat-menu-item *ngIf="selectedFilter.ColumnType == columnTypeEnum.datetime_local || selectedFilter.ColumnType == columnTypeEnum.datetime" style="height: auto;">
           <mat-form-field appearance="fill">
             <mat-label>{{FilterMode == filterModeEnum.bt?'Fecha inicial:':'Fecha:'}}</mat-label>
-            <input matInput type="datetime-local" [(ngModel)]="FilterValue" [ngModelOptions]="{standalone: true}" name="FilterValue"/>
+            <input matInput type="datetime-local" [(ngModel)]="FilterValue" [ngModelOptions]="{standalone: true}" name="FilterValue" *ngIf="selectedFilter.ColumnType == columnTypeEnum.datetime_local"/>
+            <input matInput type="datetime" [(ngModel)]="FilterValue" [ngModelOptions]="{standalone: true}" name="FilterValue" *ngIf="selectedFilter.ColumnType == columnTypeEnum.datetime"/>
           </mat-form-field><br>
           <mat-form-field appearance="fill" *ngIf="FilterMode == filterModeEnum.bt">
             <mat-label>{{'Fecha final:'}}</mat-label>
-            <input matInput type="datetime-local" [(ngModel)]="SecondFilterValue" [ngModelOptions]="{standalone: true}" name="SecondFilterValue"/>
+            <input matInput type="datetime-local" [(ngModel)]="SecondFilterValue" [ngModelOptions]="{standalone: true}" name="SecondFilterValue" *ngIf="selectedFilter.ColumnType == columnTypeEnum.datetime_local"/>
+            <input matInput type="datetime" [(ngModel)]="SecondFilterValue" [ngModelOptions]="{standalone: true}" name="SecondFilterValue" *ngIf="selectedFilter.ColumnType == columnTypeEnum.datetime"/>
           </mat-form-field>
         </div>
       </section>
